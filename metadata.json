@@ -1,0 +1,11 @@
+{
+  "name": "OSINT Navigator",
+  "description": "OSINT Navigator field image analysis and geolocation tool with EXIF, OCR, and GPS navigation.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

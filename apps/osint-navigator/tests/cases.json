@@ -1,0 +1,23 @@
+{
+  "suite": "photo-streetview-tree-matcher",
+  "version": 2,
+  "cases": [
+    {
+      "id": "tree-baszta-001",
+      "reference_url": "https://ksalnnh.net/pr/48cb07b7630f2a9efee3bf105dde3754dad357b68ee520729dd7c89668b5be68.jpg",
+      "expected_coordinates": [52.1914531, 21.0060642],
+      "expected_status": "CANDIDATE_FOUND",
+      "coordinate_source": "IMAGE_TEXT_OCR",
+      "notes": "Baseline. Coordinates are burned into the photo overlay, so they are a CANDIDATE, never VERIFIED. Street View visual hypothesis (3rd vs 4th tree from the right) must be produced by the matcher from entrance/building/path geometry — it must NOT be hardcoded as a rank filter."
+    },
+    {
+      "id": "tree-regression-002",
+      "reference_url": "https://ksalnnh.net/pr/d823c82e185d66f66d9c80190fe9eeb9641c28c52be57003258f43f64c4f7438.jpg",
+      "expected_coordinates": [52.23898, 20.9214],
+      "expected_status": "CANDIDATE_FOUND",
+      "coordinate_source": "IMAGE_TEXT_OCR",
+      "notes": "Overlay reads 'WGS84 ±5m 52.23898, 20.92140'. Production returned NO_COORDINATES_FOUND: the OCR char whitelist degraded the LSTM decode to '52 2NNE 0' and OPENAI_API_KEY was unset so the vision extractor was skipped. Independent of case 001 — no coordinate, place or candidate may carry over.",
+      "regression_guard": "must_not_return_52.1914531"
+    }
+  ]
+}

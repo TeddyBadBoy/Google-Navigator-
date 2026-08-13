@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f0b">
+<title>OSINT Navigator — teren</title>
+<style>
+:root{--bg:#0b0f0b;--panel:#111711;--line:#273227;--lime:#b7ff27;--text:#f3f6f3;--muted:#94a194;--warn:#ffd65a;--bad:#ff7777}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,sans-serif}header{position:sticky;top:0;z-index:5;background:#0b0f0bf2;border-bottom:1px solid var(--line);padding:14px 16px}main{max-width:720px;margin:auto;padding:14px 14px 112px}.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}.k{font:800 12px ui-monospace,monospace;letter-spacing:.14em;color:var(--lime)}label{display:block;margin-top:12px}.muted{color:var(--muted)}.ok{color:var(--lime)}.warn{color:var(--warn)}.bad{color:var(--bad)}input,button{font:inherit;width:100%;border-radius:14px;padding:13px;margin-top:8px}input{background:#090d09;color:var(--text);border:1px solid #344034}.btn{border:0;background:var(--lime);color:#111;font-weight:900;cursor:pointer}.secondary{background:#111;color:#fff;border:1px solid #455445}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.preview{width:100%;max-height:310px;object-fit:contain;border-radius:14px;border:1px solid var(--line);margin-top:12px;display:none;background:#080b08}.candidate{border:1px solid #344034;border-radius:14px;padding:12px;margin-top:10px;background:#090d09}.target{font:800 22px ui-monospace,monospace;word-break:break-word}.arrow{font-size:104px;line-height:1;text-align:center;color:var(--lime);transform:rotate(0deg);transition:.18s}.distance{font-size:46px;font-weight:950;text-align:center}.instruction{text-align:center;font-size:23px;font-weight:850;margin-top:6px}.pill{display:inline-block;padding:6px 10px;border:1px solid #3a483a;border-radius:999px;margin:4px 4px 0 0;font-size:13px}.debug{font:12px/1.4 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto;background:#080b08;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}footer{position:fixed;left:0;right:0;bottom:0;background:#0b0f0bf4;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom))}footer .row{max-width:720px;margin:auto}@media(max-width:430px){.row{grid-template-columns:1fr}.arrow{font-size:90px}.distance{font-size:40px}}
+</style>
+</head>
+<body>
+<header><b>⊕ OSINT Navigator</b> <span class="muted">teren v1</span></header>
+<main>
+<section class="card">
+<div class="k">1 · NOWE ZDJĘCIE / LINK</div>
+<p class="muted">Każde kliknięcie „Analizuj” zaczyna nowy run. Poprzedni cel jest natychmiast kasowany.</p>
+<label>Link do zdjęcia</label>
+<input id="url" type="url" inputmode="url" placeholder="https://.../zdjecie.jpg">
+<div class="muted" style="text-align:center;margin:8px 0">albo</div>
+<label>Zrób / wybierz zdjęcie</label>
+<input id="file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
+<img id="preview" class="preview" alt="Podgląd zdjęcia">
+<button id="analyze" class="btn">Analizuj zdjęcie</button>
+<div id="status" class="muted" style="margin-top:10px">EXIF → OCR → kandydat GPS</div>
+<div id="candidates"></div>
+<details><summary class="muted" style="margin-top:12px">Szczegóły techniczne</summary><div id="debug" class="debug">Brak analizy.</div></details>
+</section>
+
+<section class="card">
+<div class="k">2 · CEL</div>
+<div id="targetText" class="target">Nie ustawiono celu</div>
+<div id="targetMeta" class="muted">Najpierw przeanalizuj zdjęcie albo wpisz współrzędne ręcznie.</div>
+<label>Współrzędne ręcznie</label>
+<input id="manual" inputmode="decimal" placeholder="52.1914531, 21.0060642" style="margin-bottom:8px">
+<button id="manualSet" class="btn secondary">Ustaw ręcznie</button>
+
+<div id="navigationBlock" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
+<div class="k" style="font-size:11px;margin-bottom:4px;">ZOBACZ CEL / DOJEDŹ</div>
+<p class="muted" style="margin:0 0 10px 0;font-size:13px;">Najpierw zobacz okolice celu w Street View, potem wybierz dojazd.</p>
+<div class="row" style="margin-bottom:8px;">
+  <button id="navDrive" class="btn secondary" style="padding:12px 8px;font-size:14px;font-weight:800;">🚗 JEDŹ AUTEM</button>
+  <button id="navWalk" class="btn secondary" style="padding:12px 8px;font-size:14px;font-weight:800;">🚶 IDŹ PIESZO</button>
+</div>
+<div class="row">
+  <button id="navStreet" class="btn secondary" style="padding:12px 8px;font-size:14px;font-weight:800;">👁 STREET VIEW CELU</button>
+  <button id="navMap" class="btn secondary" style="padding:12px 8px;font-size:14px;font-weight:800;">🗺 MAPA CELU</button>
+</div>
+</div>
+</section>
+
+<section class="card">
+<div class="k">3 · PROWADZENIE NA ŻYWO</div>
+<div id="arrow" class="arrow">↑</div>
+<div id="distance" class="distance">—</div>
+<div id="instruction" class="instruction">Ustaw cel i włącz GPS</div>
+<div id="navMeta" class="muted" style="text-align:center;margin-top:8px">GPS + kompas telefonu</div>
+<div style="text-align:center;margin-top:8px">
+<span id="accuracyPill" class="pill">dokładność GPS: —</span>
+<span id="bearingPill" class="pill">azymut: —</span>
+<span id="headingPill" class="pill">kompas: —</span>
+</div>
+</section>
+
+<section class="card">
+<div class="k">4 · OSTATNIE 5 METRÓW</div>
+<p class="muted">Porównaj aktualny kadr z aparatu ze zdjęciem referencyjnym z Sekcji 1.</p>
+
+<input id="visionCameraFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" style="display:none">
+<input id="visionGalleryFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:none">
+
+<div class="row" style="margin-top:12px;">
+  <button id="btnVisionCamera" type="button" class="btn secondary" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:14px;">📷 ZRÓB ZDJĘCIE</button>
+  <button id="btnVisionGallery" type="button" class="btn secondary" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:14px;">🖼 WYBIERZ Z GALERII</button>
+</div>
+
+<div id="visionPreviewContainer" style="position:relative;display:none;margin-top:12px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#080b08;">
+  <img id="visionPreviewImg" style="width:100%;display:block;max-height:360px;object-fit:contain;" alt="Aktualne zdjęcie">
+  <div id="visionCrosshair" style="position:absolute;display:none;width:36px;height:36px;border:2px solid var(--lime);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 10px rgba(183,255,39,0.9);z-index:2;">
+    <div style="position:absolute;top:50%;left:0;right:0;height:2px;background:var(--lime);transform:translateY(-50%);"></div>
+    <div style="position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--lime);transform:translateX(-50%);"></div>
+    <div id="visionCrosshairLabel" style="position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;white-space:nowrap;background:#090d09f0;color:var(--lime);border:1px solid var(--lime);border-radius:6px;padding:2px 6px;font:11px ui-monospace,monospace;font-weight:700;"></div>
+  </div>
+</div>
+
+<button id="checkVision" class="btn" style="margin-top:12px">SPRAWDŹ OSTATNIE 5 M</button>
+<div id="visionStatus" class="muted" style="margin-top:10px">Gotowy do analizy wizualnej.</div>
+
+<div id="visionResults" style="display:none;margin-top:14px;">
+  <div id="visionBanner" style="padding:14px;border-radius:14px;font-weight:900;font-size:18px;text-align:center;margin-bottom:12px;"></div>
+
+  <div style="background:#090d09;border:1px solid #344034;border-radius:14px;padding:12px;margin-bottom:10px;">
+    <div class="k" style="font-size:10px;margin-bottom:4px;">WSKAZÓWKA (HINT)</div>
+    <div id="visionHint" style="font-weight:700;font-size:15px;color:var(--text)">—</div>
+  </div>
+
+  <div class="row" style="margin-bottom:10px;">
+    <div style="background:#090d09;border:1px solid #344034;border-radius:14px;padding:10px;text-align:center;">
+      <div class="muted" style="font-size:11px;">CONFIDENCE</div>
+      <div id="visionConfidence" style="font-size:28px;font-weight:900;color:var(--lime);">0%</div>
+    </div>
+    <div style="background:#090d09;border:1px solid #344034;border-radius:14px;padding:10px;text-align:center;">
+      <div class="muted" style="font-size:11px;">VERDICT</div>
+      <div id="visionVerdict" style="font-size:15px;font-weight:800;margin-top:6px;">—</div>
+    </div>
+  </div>
+
+  <div style="background:#090d09;border:1px solid #344034;border-radius:14px;padding:12px;margin-bottom:10px;">
+    <div class="k" style="font-size:10px;margin-bottom:8px;">OCENY SKŁADOWE (SCORES)</div>
+    <div id="visionScores" style="display:grid;gap:6px;font-size:13px;"></div>
+  </div>
+
+  <div style="background:#090d09;border:1px solid #344034;border-radius:14px;padding:12px;margin-bottom:10px;">
+    <div class="k" style="font-size:10px;margin-bottom:6px;">TRWAŁE ELEMENTY (STABLE LANDMARKS)</div>
+    <div id="visionLandmarks"></div>
+  </div>
+
+  <div style="background:#090d09;border:1px solid #344034;border-radius:14px;padding:12px;">
+    <div class="k" style="font-size:10px;color:var(--warn);margin-bottom:6px;">NIEZGODNOŚCI (CONFLICTS)</div>
+    <div id="visionConflicts"></div>
+  </div>
+</div>
+</section>
+</main>
+<footer><div class="row"><button id="start" class="btn">▶ GPS + KOMPAS</button><button id="stop" class="btn secondary">■ STOP</button></div></footer>
+<script>
+const $=s=>document.querySelector(s);
+const MAX_INLINE=3*1024*1024,MAX_SOURCE=12*1024*1024,MAX_EDGE=1024;
+let generation=0,controller=null,target=null,watchId=null,lastPos=null,phoneHeading=null,lastDistance=null,previewUrl=null;
+const rad=x=>x*Math.PI/180,deg=x=>x*180/Math.PI;
+function parseCoord(v){const m=String(v||'').trim().match(/^\s*(-?\d{1,2}(?:[.,]\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:[.,]\d+)?)\s*$/);if(!m)return null;const p={lat:+m[1].replace(',','.'),lon:+m[2].replace(',','.')};return Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180?p:null}
+function hav(a,b){const R=6371000,dLat=rad(b.lat-a.lat),dLon=rad(b.lon-a.lon),s=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(s))}
+function bearing(a,b){const y=Math.sin(rad(b.lon-a.lon))*Math.cos(rad(b.lat)),x=Math.cos(rad(a.lat))*Math.sin(rad(b.lat))-Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lon-a.lon));return(deg(Math.atan2(y,x))+360)%360}
+function clearCurrent(reason='nowy run'){target=null;lastDistance=null;$('#targetText').textContent='Nie ustawiono celu';$('#targetMeta').textContent=reason;$('#distance').textContent='—';$('#instruction').textContent='Analizuję nowy przypadek';$('#arrow').style.transform='rotate(0deg)';$('#candidates').innerHTML='';}
+function setTarget(c,meta='kandydat'){target={lat:Number(c.lat),lon:Number(c.lon)};lastDistance=null;$('#targetText').textContent=`${target.lat.toFixed(7)}, ${target.lon.toFixed(7)}`;$('#targetMeta').innerHTML=`${meta} · <b>VERIFIED=false</b>`;renderNav();}
+function candidateCard(c,i){const conf=Number.isFinite(Number(c.confidence))?`${Math.round(Number(c.confidence)*100)}%`:'—';return `<div class="candidate"><b>Kandydat ${i+1}</b><div>${Number(c.lat).toFixed(7)}, ${Number(c.lon).toFixed(7)}</div><div class="muted">${c.source||'UNKNOWN'} · confidence ${conf} · VERIFIED=false</div><button class="btn secondary useCandidate" data-i="${i}">Ustaw jako cel</button></div>`}
+function blobData(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(r.error||new Error('Błąd odczytu pliku'));r.readAsDataURL(blob)})}
+async function fileData(file){const type=String(file?.type||'').toLowerCase();if(!/^image\/(jpeg|png|webp)$/.test(type))throw new Error('Obsługiwane: JPG, PNG, WEBP.');if(file.size>MAX_SOURCE)throw new Error('Zdjęcie przekracza 12 MB.');if(file.size<=MAX_INLINE)return blobData(file);let bmp;try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}catch{bmp=await createImageBitmap(file)}const scale=Math.min(1,MAX_EDGE/Math.max(bmp.width,bmp.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bmp.width*scale));canvas.height=Math.max(1,Math.round(bmp.height*scale));const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#000';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(bmp,0,0,canvas.width,canvas.height);bmp.close?.();for(const q of [.78,.62,.48]){const b=await new Promise(r=>canvas.toBlob(r,'image/jpeg',q));if(b&&b.size<=MAX_INLINE)return blobData(b)}throw new Error('Nie udało się zmniejszyć zdjęcia do limitu API.')}
+function showPreview(){const file=$('#file').files[0],url=$('#url').value.trim();if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null}if(file){previewUrl=URL.createObjectURL(file);$('#preview').src=previewUrl;$('#preview').style.display='block'}else if(url){$('#preview').src=url;$('#preview').style.display='block'}else{$('#preview').style.display='none'}}
+$('#url').addEventListener('input',()=>{if($('#url').value.trim()){$('#file').value='';showPreview()}});$('#file').addEventListener('change',()=>{if($('#file').files[0]){$('#url').value='';showPreview()}});
+$('#analyze').onclick=async()=>{generation++;const myGen=generation;if(controller)controller.abort();controller=null;clearCurrent('Nowe wejście — poprzedni wynik usunięty');$('#status').textContent='Analizuję…';$('#debug').textContent='START';const url=$('#url').value.trim(),file=$('#file').files[0];if(Boolean(url)===Boolean(file)){const msg='Podaj dokładnie jeden link albo jedno zdjęcie.';$('#status').innerHTML=`<span class="bad">${msg}</span>`;return}let body;try{body=url?{url}:{image_data:await fileData(file)}}catch(e){if(myGen!==generation)return;$('#status').innerHTML=`<span class="bad">${e.message}</span>`;return}if(myGen!==generation)return;controller=new AbortController();try{const r=await fetch('/api/run',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:controller.signal,cache:'no-store'});const raw=await r.text();let j;try{j=JSON.parse(raw)}catch{throw new Error(`Silnik zwrócił HTTP ${r.status} bez JSON`)}if(myGen!==generation)return;$('#debug').textContent=JSON.stringify(j,null,2);if(!r.ok)throw new Error(j.error||`HTTP ${r.status}`);const list=Array.isArray(j.candidates)?j.candidates:[];$('#status').innerHTML=`<span class="${list.length?'ok':'warn'}">${j.status}</span> · run ${String(j.run_id||'').slice(0,8)}`;$('#candidates').innerHTML=list.map(candidateCard).join('');document.querySelectorAll('.useCandidate').forEach(b=>b.onclick=()=>{const c=list[+b.dataset.i];setTarget(c,`${c.source||'CANDIDATE'} · run ${String(j.run_id||'').slice(0,8)}`)});if(list[0])setTarget(list[0],`${list[0].source||'CANDIDATE'} · run ${String(j.run_id||'').slice(0,8)}`);else $('#targetMeta').textContent='Nie znaleziono współrzędnych. Wpisz je ręcznie.'}catch(e){if(e?.name==='AbortError'||controller?.signal.aborted)return;if(myGen!==generation)return;$('#status').innerHTML=`<span class="bad">RUN_FAILED</span> · ${e.message}`;$('#targetMeta').textContent='Błąd nowej analizy — stary cel nie został przywrócony.'}finally{if(myGen===generation)controller=null}};
+$('#manualSet').onclick=()=>{generation++;if(controller)controller.abort();controller=null;const p=parseCoord($('#manual').value);if(!p){$('#targetMeta').innerHTML='<span class="bad">Niepoprawne współrzędne.</span>';return}clearCurrent('Cel ręczny');setTarget(p,'MANUAL')};
+function renderNav(){if(!target){$('#instruction').textContent='Ustaw cel i włącz GPS';return}if(!lastPos){$('#instruction').textContent='Cel ustawiony — włącz GPS';return}const d=hav(lastPos,target),br=bearing(lastPos,target),rel=phoneHeading==null?br:((br-phoneHeading+540)%360)-180;$('#distance').textContent=d<1000?`${Math.round(d)} m`:`${(d/1000).toFixed(2)} km`;$('#bearingPill').textContent=`azymut: ${Math.round(br)}°`;$('#headingPill').textContent=phoneHeading==null?'kompas: brak':`kompas: ${Math.round(phoneHeading)}°`;$('#accuracyPill').textContent=`dokładność GPS: ±${Math.round(lastPos.accuracy||0)} m`;$('#arrow').style.transform=`rotate(${rel}deg)`;let msg;if(d<=5)msg=(lastPos.accuracy||99)<=8?'CEL — sprawdź otoczenie':'GPS pokazuje cel, ale dokładność jest słaba';else if(phoneHeading==null)msg=`Idź na azymut ${Math.round(br)}°`;else if(Math.abs(rel)<18)msg='IDŹ PROSTO';else if(rel>0)msg='SKRĘĆ W PRAWO';else msg='SKRĘĆ W LEWO';if(lastDistance!=null&&d>8){if(d<lastDistance-2)msg+=' · CIEPLEJ';else if(d>lastDistance+2)msg+=' · ZIMNIEJ'}$('#instruction').textContent=msg;$('#navMeta').textContent=`Twoja pozycja ${lastPos.lat.toFixed(6)}, ${lastPos.lon.toFixed(6)} · cel ${target.lat.toFixed(6)}, ${target.lon.toFixed(6)}`;lastDistance=d}
+async function compassPermission(){try{if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){const x=await DeviceOrientationEvent.requestPermission();if(x!=='granted')throw new Error('Brak zgody na kompas')}}catch(e){$('#headingPill').textContent='kompas: brak zgody'}}
+function orientation(e){let h=null;if(Number.isFinite(e.webkitCompassHeading))h=e.webkitCompassHeading;else if(e.absolute&&Number.isFinite(e.alpha))h=(360-e.alpha)%360;if(h!=null){phoneHeading=h;renderNav()}}
+$('#start').onclick=async()=>{if(!target){$('#instruction').textContent='Najpierw ustaw cel';return}if(!navigator.geolocation){$('#instruction').textContent='Ta przeglądarka nie udostępnia GPS';return}await compassPermission();window.removeEventListener('deviceorientationabsolute',orientation,true);window.removeEventListener('deviceorientation',orientation,true);window.addEventListener('deviceorientationabsolute',orientation,true);window.addEventListener('deviceorientation',orientation,true);if(watchId!=null)navigator.geolocation.clearWatch(watchId);watchId=navigator.geolocation.watchPosition(p=>{lastPos={lat:p.coords.latitude,lon:p.coords.longitude,accuracy:p.coords.accuracy};renderNav()},e=>{$('#instruction').textContent=`GPS: ${e.message}`},{enableHighAccuracy:true,maximumAge:1000,timeout:15000});$('#instruction').textContent='Czekam na GPS…'};
+$('#stop').onclick=()=>{if(watchId!=null)navigator.geolocation.clearWatch(watchId);watchId=null;lastPos=null;phoneHeading=null;lastDistance=null;$('#distance').textContent='—';$('#instruction').textContent='Nawigacja zatrzymana';$('#accuracyPill').textContent='dokładność GPS: —';$('#headingPill').textContent='kompas: —'};
+
+$('#navDrive').onclick=()=>{if(!target)return;open(`https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lon}&travelmode=driving`,'_blank','noopener')};
+$('#navWalk').onclick=()=>{if(!target)return;open(`https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lon}&travelmode=walking`,'_blank','noopener')};
+$('#navStreet').onclick=()=>{if(!target)return;open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${target.lat},${target.lon}`,'_blank','noopener')};
+$('#navMap').onclick=()=>{if(!target)return;open(`https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lon}`,'_blank','noopener')};
+
+let visionPreviewUrl=null,lastVisionResult=null,activeVisionFile=null;
+function setVisionFile(file){
+  activeVisionFile=file;
+  if(visionPreviewUrl){URL.revokeObjectURL(visionPreviewUrl);visionPreviewUrl=null}
+  if(activeVisionFile){
+    visionPreviewUrl=URL.createObjectURL(activeVisionFile);
+    $('#visionPreviewImg').src=visionPreviewUrl;
+    $('#visionPreviewContainer').style.display='block';
+  }else{
+    $('#visionPreviewContainer').style.display='none';
+  }
+  $('#visionCrosshair').style.display='none';
+  $('#visionResults').style.display='none';
+}
+
+$('#btnVisionCamera').onclick=()=>$('#visionCameraFile').click();
+$('#btnVisionGallery').onclick=()=>$('#visionGalleryFile').click();
+
+$('#visionCameraFile').addEventListener('change',e=>{if(e.target.files[0]){$('#visionGalleryFile').value='';setVisionFile(e.target.files[0])}});
+$('#visionGalleryFile').addEventListener('change',e=>{if(e.target.files[0]){$('#visionCameraFile').value='';setVisionFile(e.target.files[0])}});
+
+function updateCrosshairPosition(){if(!lastVisionResult||!lastVisionResult.targetVisible||!lastVisionResult.target){$('#visionCrosshair').style.display='none';return}const t=lastVisionResult.target;if(!Number.isFinite(Number(t.x))||!Number.isFinite(Number(t.y))){$('#visionCrosshair').style.display='none';return}const img=$('#visionPreviewImg');if(!img||!img.complete||!img.naturalWidth){$('#visionCrosshair').style.display='none';return}const imgRatio=img.naturalWidth/img.naturalHeight,containerW=img.clientWidth,containerH=img.clientHeight,containerRatio=containerW/containerH;let renderW,renderH,offsetX,offsetY;if(containerRatio>imgRatio){renderH=containerH;renderW=renderH*imgRatio;offsetX=(containerW-renderW)/2;offsetY=0}else{renderW=containerW;renderH=renderW/imgRatio;offsetX=0;offsetY=(containerH-renderH)/2}const targetX=offsetX+Number(t.x)*renderW,targetY=offsetY+Number(t.y)*renderH,ch=$('#visionCrosshair');ch.style.left=`${targetX}px`;ch.style.top=`${targetY}px`;ch.style.display='block';const lbl=$('#visionCrosshairLabel');if(t.label){lbl.textContent=t.label;lbl.style.display='block'}else{lbl.style.display='none'}}
+
+$('#visionPreviewImg').addEventListener('load',updateCrosshairPosition);
+window.addEventListener('resize',updateCrosshairPosition);
+
+$('#checkVision').onclick=async()=>{
+  const currentFile=activeVisionFile;
+  if(!currentFile){$('#visionStatus').innerHTML='<span class="bad">Zrób lub wybierz aktualne zdjęcie.</span>';return}
+  const refUrl=$('#url').value.trim(),refFile=$('#file').files[0];
+  if(!refUrl&&!refFile){$('#visionStatus').innerHTML='<span class="bad">Brak zdjęcia referencyjnego w Sekcji 1.</span>';return}
+  $('#visionStatus').textContent='Porównuję zdjęcia… (Gemini Vision)';
+  $('#checkVision').disabled=true;
+  $('#visionResults').style.display='none';
+  $('#visionCrosshair').style.display='none';
+  lastVisionResult=null;
+  try{
+    const refData=refUrl?refUrl:await fileData(refFile);
+    const currData=await fileData(currentFile);
+    const body={reference_image:refData,current_image:currData,target:target,last_position:lastPos};
+    const res=await fetch('/api/vision',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    const raw=await res.text();
+    let j;
+    try{
+      j=JSON.parse(raw);
+    }catch{
+      throw new Error(`HTTP ${res.status}: ${raw.slice(0,100)}`);
+    }
+    if(!res.ok)throw new Error(j.error||`HTTP ${res.status}`);
+    lastVisionResult=j;
+    $('#visionStatus').innerHTML=`<span class="ok">Analiza gotowa</span> · run ${String(j.run_id||'').slice(0,8)}`;
+    const conf=Number(j.confidence)||0,samePlace=Boolean(j.samePlace),banner=$('#visionBanner');
+    if(conf>=85&&samePlace){
+      banner.textContent='✓ MIEJSCE POTWIERDZONE';
+      banner.style.background='rgba(183, 255, 39, 0.15)';
+      banner.style.border='2px solid var(--lime)';
+      banner.style.color='var(--lime)';
+    }else if(conf>=60){
+      banner.textContent='MOŻLIWE MIEJSCE — ZRÓB DRUGIE ZDJĘCIE';
+      banner.style.background='rgba(255, 214, 90, 0.15)';
+      banner.style.border='2px solid var(--warn)';
+      banner.style.color='var(--warn)';
+    }else{
+      banner.textContent='TO NIE TEN WIDOK';
+      banner.style.background='rgba(255, 119, 119, 0.15)';
+      banner.style.border='2px solid var(--bad)';
+      banner.style.color='var(--bad)';
+    }
+    $('#visionConfidence').textContent=`${conf}%`;
+    $('#visionVerdict').textContent=j.verdict||'—';
+    $('#visionVerdict').className=(conf>=85&&samePlace)?'ok':(conf>=60?'warn':'bad');
+    $('#visionHint').textContent=j.hint||'—';
+    const scoreLabels={architecture:'Architektura',entrancePath:'Wejście / ścieżka',vegetation:'Roślinność',fixedObjects:'Trwałe obiekty',viewpoint:'Kąt widzenia'};
+    const scores=j.scores||{};
+    $('#visionScores').innerHTML=Object.entries(scoreLabels).map(([k,label])=>{
+      const val=Number(scores[k])||0;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="muted">${label}</span>
+        <b>${val}%</b>
+      </div>
+      <div style="background:#1d271d;height:6px;border-radius:3px;overflow:hidden;margin-bottom:4px;">
+        <div style="background:${val>=80?'var(--lime)':val>=50?'var(--warn)':'var(--bad)'};height:100%;width:${val}%;"></div>
+      </div>`;
+    }).join('');
+    const landmarks=Array.isArray(j.stableLandmarks)?j.stableLandmarks:[];
+    $('#visionLandmarks').innerHTML=landmarks.length?landmarks.map(l=>`<span class="pill ok">${l}</span>`).join(''):'<span class="muted" style="font-size:13px">Brak wskazanych punktów</span>';
+    const conflicts=Array.isArray(j.conflicts)?j.conflicts:[];
+    $('#visionConflicts').innerHTML=conflicts.length?conflicts.map(c=>`<span class="pill bad">${c}</span>`).join(''):'<span class="pill ok">Brak wykrytych konfliktów</span>';
+    $('#visionResults').style.display='block';
+    if(j.targetVisible)updateCrosshairPosition();
+  }catch(e){
+    $('#visionStatus').innerHTML=`<span class="bad">Błąd analizy: ${e.message}</span>`;
+  }finally{
+    $('#checkVision').disabled=false;
+  }
+};
+
+showPreview();
+</script>
+</body>
+</html>

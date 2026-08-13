@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ADHD MailBoard</title>
+<style>body{font-family:system-ui;margin:0;background:#111;color:#eee}header{padding:16px;position:sticky;top:0;background:#111}#alarm{padding:10px;background:#5b1111;border-radius:10px}.board{display:grid;grid-template-columns:repeat(4,minmax(260px,1fr));gap:12px;padding:16px;overflow:auto}.col{background:#1d1d1d;border-radius:12px;padding:10px;min-height:70vh}.card{background:#292929;margin:8px 0;padding:12px;border-radius:10px;border-left:6px solid #777}.critical{border-color:#f33}.high{border-color:#f90}.normal{border-color:#49f}.low{border-color:#777}.overdue{outline:2px solid #f33}.meta{font-size:12px;opacity:.75}</style></head>
+<body><header><h1>ADHD MailBoard</h1><div id="alarm">Ładowanie alarmów…</div></header><main class="board" id="board"></main>
+<script>
+const columns=['Backlog','Do zrobienia','W toku','Gotowe'];
+const demo=[{key:'MAIL-2',title:'Przenieść najnowsze funkcjonalności i zmiany z Jira',status:'W toku',urgency:'Krytyczna',due:'2026-08-04'}];
+function rank(u){return {Krytyczna:0,Wysoka:1,Normalna:2,Niska:3}[u]??2}
+function render(items){const today=new Date().toISOString().slice(0,10);items.sort((a,b)=>rank(a.urgency)-rank(b.urgency));const alarms=items.filter(x=>x.status!=='Gotowe'&&x.due&&x.due<=today);document.querySelector('#alarm').textContent=alarms.length?`🔴 Alarmy: ${alarms.map(x=>x.key).join(', ')}`:'Brak czerwonych alarmów';const board=document.querySelector('#board');board.innerHTML='';columns.forEach(c=>{const col=document.createElement('section');col.className='col';col.innerHTML=`<h2>${c}</h2>`;items.filter(x=>x.status===c).forEach(x=>{const card=document.createElement('article');const overdue=x.due&&x.due<today&&x.status!=='Gotowe';card.className=`card ${String(x.urgency).toLowerCase().replace('krytyczna','critical').replace('wysoka','high').replace('normalna','normal').replace('niska','low')} ${overdue?'overdue':''}`;card.innerHTML=`<b>${x.key}</b><div>${x.title}</div><div class="meta">Pilność: ${x.urgency||'brak'} · Termin: ${x.due||'—'}</div>`;col.appendChild(card)});board.appendChild(col)})}
+render(demo);
+</script></body></html>

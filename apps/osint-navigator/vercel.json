@@ -1,0 +1,16 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {"key":"Permissions-Policy","value":"geolocation=(self), camera=(self)"},
+        {"key":"X-Content-Type-Options","value":"nosniff"},
+        {"key":"Referrer-Policy","value":"no-referrer"}
+      ]
+    }
+  ],
+  "functions": {
+    "api/analyze.js": {"includeFiles":"node_modules/tesseract.js-core/**"},
+    "api/run.js": {"includeFiles":"node_modules/tesseract.js-core/**"}
+  }
+}
