@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import {safeFetchImage} from './_lib/safe-image-fetch.js';
+import {guardApiRequest} from './_lib/request-guard.js';
 
 export const config={maxDuration:60};
 const MODEL=process.env.GEMINI_VISION_MODEL||'gemini-3.6-flash';
@@ -68,6 +69,7 @@ const responseSchema={
 };
 
 export default async function handler(req,res){
+  if(!guardApiRequest(req,res))return;
   if(req.method!=='POST'){res.setHeader('Allow','POST');return send(res,405,{error:'Method not allowed'});}
   if(!process.env.GEMINI_API_KEY)return send(res,503,{error:'GEMINI_API_KEY missing. Import this branch into Google AI Studio Build or configure the secret server-side.'});
   const {reference_image,current_image,target,last_position}=req.body||{};

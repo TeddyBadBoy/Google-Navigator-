@@ -7,15 +7,25 @@ import analyzeHandler from './apps/osint-navigator/api/analyze.js';
 import mapsResolveHandler from './apps/osint-navigator/api/maps-resolve.js';
 import treeMatchHandler from './apps/osint-navigator/api/tree-match.js';
 import visionHandler from './apps/osint-navigator/api/vision.js';
+import {guardApiRequest} from './apps/osint-navigator/api/_lib/request-guard.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = 3000;
+const guardedAiRoutes = new Set(['/api/run','/api/analyze','/api/vision']);
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use((req,res,next) => {
+  if(!guardedAiRoutes.has(req.path)) return next();
+  if(!guardApiRequest(req,res)) return;
+  next();
+});
+
+// Keep inline image JSON below the platform edge limit. Unauthorized requests are rejected above,
+// before Express spends memory parsing their body.
+app.use(express.json({ limit: '4.5mb' }));
+app.use(express.urlencoded({ extended: true, limit: '64kb' }));
 
 // API routes
 app.all('/api/run', (req, res) => runHandler(req, res));

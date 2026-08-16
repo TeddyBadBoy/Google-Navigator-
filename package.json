@@ -8,7 +8,7 @@
     "build": "node -c server.js",
     "lint": "node -c server.js",
     "start": "node server.js",
-    "test": "node apps/osint-navigator/tests/state-machine.test.mjs"
+    "test": "node apps/osint-navigator/tests/state-machine.test.mjs && node apps/osint-navigator/tests/request-guard.test.mjs"
   },
   "dependencies": {
     "exifr": "^7.1.3",

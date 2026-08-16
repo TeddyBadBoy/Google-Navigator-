@@ -3,9 +3,11 @@ import * as exifr from 'exifr';
 import {safeFetchImage} from './_lib/safe-image-fetch.js';
 import {extractCoordinatesFromImage} from './_lib/openai-vision.js';
 import {extractCoordinatesWithOcr} from './_lib/ocr.js';
+import {guardApiRequest} from './_lib/request-guard.js';
 export const config={api:{bodyParser:{sizeLimit:'32kb'}},maxDuration:60};
 function send(res,status,body){res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.setHeader('Cache-Control','no-store');res.end(JSON.stringify(body));}
 export default async function handler(req,res){
+  if(!guardApiRequest(req,res))return;
   if(req.method!=='POST'){res.setHeader('Allow','POST');return send(res,405,{error:'Method not allowed'});}
   const url=typeof req.body?.url==='string'?req.body.url.trim():'';
   if(!url||url.length>2048)return send(res,400,{error:'Valid image URL required'});
